@@ -24,6 +24,34 @@ resource "aws_eks_cluster" "socks_shop" {
 }
 
 output "kubeconfig" {
-  value = aws_eks_cluster.socks_shop.kubeconfig[0]
+  value = <<EOT
+apiVersion: v1
+clusters:
+- cluster:
+    server: ${aws_eks_cluster.socks_shop.endpoint}
+    certificate-authority-data: ${aws_eks_cluster.socks_shop.certificate_authority[0].data}
+  name: ${aws_eks_cluster.socks_shop.name}
+contexts:
+- context:
+    cluster: ${aws_eks_cluster.socks_shop.name}
+    user: aws
+  name: ${aws_eks_cluster.socks_shop.name}
+current-context: ${aws_eks_cluster.socks_shop.name}
+kind: Config
+preferences: {}
+users:
+- name: aws
+  user:
+    exec:
+      apiVersion: client.authentication.k8s.io/v1alpha1
+      command: aws-iam-authenticator
+      args:
+        - "token"
+        - "-i"
+        - "${aws_eks_cluster.socks_shop.name}"
+EOT
 }
+
+
+
 
